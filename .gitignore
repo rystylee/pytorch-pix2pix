@@ -10,6 +10,7 @@ VENV/
 data/*
 logs/*
 result/*
+videos/*
 
 # Editor
 .vscode/*

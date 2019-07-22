@@ -1,5 +1,6 @@
 import os
 import time
+import subprocess
 
 import torch
 import torch.nn.functional as F
@@ -7,8 +8,10 @@ import torch.optim as optim
 import torchvision.utils
 from torch.utils.tensorboard import SummaryWriter
 
+from PIL import Image
+
 from model import weights_init, Discriminator, Generator
-from util import denormalize
+from util import get_input_tensor, toPIL, denormalize
 
 
 def gan_loss(x, target):
@@ -41,22 +44,16 @@ class Trainer(object):
         self.optim_G = optim.Adam(self.G.parameters(), lr=args.lr, betas=(args.beta1, args.beta2))
         self.optim_D = optim.Adam(self.D.parameters(), lr=args.lr, betas=(args.beta1, args.beta2))
 
-        # Parameters
+        # Arguments
         self.lambda_l1 = args.lambda_l1
         self.log_freq = args.log_freq
+        self.dataset_name = args.dataset_name
 
         time_str = time.strftime("%Y%m%d-%H%M%S")
         self.writer = SummaryWriter('{}/{}-{}'.format(args.log_dir, args.dataset_name, time_str))
 
     def __del__(self):
         self.writer.close()
-
-    def save_weights(self, save_dir, global_step):
-        d_name = 'D_{}.pth'.format(global_step)
-        g_name = 'G_{}.pth'.format(global_step)
-
-        torch.save(self.D.state_dict(), os.path.join(save_dir, d_name))
-        torch.save(self.G.state_dict(), os.path.join(save_dir, g_name))
 
     def optimize(self, A, B, global_step):
         A = A.to(self.device)
@@ -113,3 +110,33 @@ class Trainer(object):
         self.optim_G.zero_grad()
         loss_G.backward()
         self.optim_G.step()
+
+    def save_weights(self, save_dir, global_step):
+        d_name = '{}_D_{}.pth'.format(self.dataset_name, global_step)
+        g_name = '{}_G_{}.pth'.format(self.dataset_name, global_step)
+
+        torch.save(self.D.state_dict(), os.path.join(save_dir, d_name))
+        torch.save(self.G.state_dict(), os.path.join(save_dir, g_name))
+
+    def save_video(self, video_dir, global_step):
+        output_dir = os.path.join(video_dir, 'step_{}'.format(global_step))
+        os.mkdir(output_dir)
+
+        input_img = Image.open('imgs/test.png').convert('RGB')
+        input_tensor = get_input_tensor(input_img).unsqueeze(0).to(self.device)
+
+        self.G.eval()
+        for i in range(450):
+            with torch.no_grad():
+                out = self.G(input_tensor)
+
+            out_denormalized = denormalize(out.squeeze()).cpu()
+            out_img = toPIL(out_denormalized)
+            out_img.save('{0}/{1:04d}.png'.format(output_dir, i))
+
+            input_tensor = out
+
+        self.G.train()
+
+        cmd = 'ffmpeg -r 30 -i {}/%04d.png -vcodec libx264 -pix_fmt yuv420p -r 30 {}/movie.mp4'.format(output_dir, output_dir)
+        subprocess.call(cmd.split())

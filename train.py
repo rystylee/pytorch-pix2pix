@@ -25,6 +25,9 @@ def train(args):
             if global_step % args.save_freq == 0:
                 trainer.save_weights(args.save_dir, global_step)
 
+            if global_step % args.video_freq == 0:
+                trainer.save_video(args.video_dir, global_step)
+
             global_step += 1
 
 
@@ -57,6 +60,8 @@ def main():
     parser.add_argument('--log_freq', type=int, default=100)
     parser.add_argument('--save_dir', type=str, default='result')
     parser.add_argument('--save_freq', type=int, default=100)
+    parser.add_argument('--video_dir', type=str, default='videos')
+    parser.add_argument('--video_freq', type=int, default=500)
 
     args = parser.parse_args()
     print(args)
@@ -66,6 +71,9 @@ def main():
 
     if not os.path.exists(args.log_dir):
         os.mkdir(args.log_dir)
+
+    if not os.path.exists(args.video_dir):
+        os.mkdir(args.video_dir)
 
     train(args)
 
