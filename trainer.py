@@ -80,36 +80,43 @@ class Trainer(object):
         # ----------------------------------------------------------------
         # 1. Train D
         # ----------------------------------------------------------------
+        # Real
         real_pair = torch.cat([A, B], dim=1)
         real_D = self.D(real_pair)
         loss_real_D = gan_loss(real_D, target=1)
 
+        # Fake
         fake_pair = torch.cat([A, fake_B], dim=1)
         fake_D = self.D(fake_pair.detach())
         loss_fake_D = gan_loss(fake_D, target=0)
 
         loss_D = (loss_real_D + loss_fake_D) * 0.5
-        self.writer.add_scalar('loss/loss_D', loss_D.item(), global_step)
 
         self.optim_D.zero_grad()
         loss_D.backward()
         self.optim_D.step()
 
-        # ----------------------------------------------------------------
-        # 2. Train G
-        # ----------------------------------------------------------------
-        with torch.no_grad():
-            fake_D2 = self.D(fake_pair)
+        # Logging
+        self.writer.add_scalar('loss/loss_D', loss_D.item(), global_step)
 
-        loss_G_gan = gan_loss(fake_D2, target=1)
-        loss_G_l1 = l1_loss(fake_B, B) * self.lambda_l1
+        # # ----------------------------------------------------------------
+        # # 2. Train G
+        # # ----------------------------------------------------------------
+        fake_D2 = self.D(fake_pair)
 
-        loss_G = loss_G_gan + loss_G_l1
-        self.writer.add_scalar('loss/loss_G', loss_G.item(), global_step)
+        loss_G_GAN = gan_loss(fake_D2, target=1)
+        loss_G_L1 = l1_loss(fake_B, B)
+
+        loss_G = loss_G_GAN + loss_G_L1 * self.lambda_l1
 
         self.optim_G.zero_grad()
         loss_G.backward()
         self.optim_G.step()
+
+        # Logging
+        self.writer.add_scalar('loss/loss_G_GAN', loss_G_GAN.item(), global_step)
+        self.writer.add_scalar('loss/loss_G_L1', loss_G_L1.item(), global_step)
+        self.writer.add_scalar('loss/loss_G', loss_G.item(), global_step)
 
     def save_weights(self, save_dir, global_step):
         d_name = '{}_D_{}.pth'.format(self.dataset_name, global_step)

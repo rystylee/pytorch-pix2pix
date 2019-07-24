@@ -10,7 +10,8 @@ from trainer import Trainer
 
 def train(args):
     print('Loading dataset...')
-    dataset = AlignedDataset('{}/{}'.format(args.data_root, args.dataset_name), args.direction, args.scale_size, args.crop_size)
+    data_dir = '{}/{}'.format(args.data_root, args.dataset_name)
+    dataset = AlignedDataset(data_dir, args.direction, args.scale_size, args.crop_size)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     print('The number of training images: {}'.format(len(dataset)))
 
@@ -25,8 +26,8 @@ def train(args):
             if global_step % args.save_freq == 0:
                 trainer.save_weights(args.save_dir, global_step)
 
-            if global_step % args.video_freq == 0:
-                trainer.save_video(args.video_dir, global_step)
+            # if global_step % args.video_freq == 0:
+            #     trainer.save_video(args.video_dir, global_step)
 
             global_step += 1
 
@@ -36,7 +37,7 @@ def main():
 
     # Dataset
     parser.add_argument('--data_root', type=str, default='data', help='')
-    parser.add_argument('--dataset_name', type=str, default='portrait', help='')
+    parser.add_argument('--dataset_name', type=str, default='cityscapes', help='')
     parser.add_argument('--direction', type=str, default='AtoB', help='')
     parser.add_argument('--scale_size', type=int, default=286, help='')
     parser.add_argument('--crop_size', type=int, default=256, help='')
@@ -49,7 +50,7 @@ def main():
     parser.add_argument('--ngf', type=int, default=64, help='')
 
     # Training
-    parser.add_argument('--n_epoch', type=int, default=100, help='')
+    parser.add_argument('--n_epoch', type=int, default=200, help='')
     parser.add_argument('--lr', type=float, default=0.0002, help='')
     parser.add_argument('--beta1', type=float, default=0.5, help='')
     parser.add_argument('--beta2', type=float, default=0.999, help='')
