@@ -80,6 +80,8 @@ class Trainer(object):
         # ----------------------------------------------------------------
         # 1. Train D
         # ----------------------------------------------------------------
+        self._set_requires_grad(self.D, True)
+
         # Real
         real_pair = torch.cat([A, B], dim=1)
         real_D = self.D(real_pair)
@@ -102,11 +104,13 @@ class Trainer(object):
         # # ----------------------------------------------------------------
         # # 2. Train G
         # # ----------------------------------------------------------------
+        self._set_requires_grad(self.D, False)
+
+        # Fake
         fake_D2 = self.D(fake_pair)
 
         loss_G_GAN = gan_loss(fake_D2, target=1)
         loss_G_L1 = l1_loss(fake_B, B)
-
         loss_G = loss_G_GAN + loss_G_L1 * self.lambda_l1
 
         self.optim_G.zero_grad()
@@ -117,6 +121,14 @@ class Trainer(object):
         self.writer.add_scalar('loss/loss_G_GAN', loss_G_GAN.item(), global_step)
         self.writer.add_scalar('loss/loss_G_L1', loss_G_L1.item(), global_step)
         self.writer.add_scalar('loss/loss_G', loss_G.item(), global_step)
+
+    def _set_requires_grad(self, nets, requires_grad=False):
+        if not isinstance(nets, list):
+            nets = [nets]
+        for net in nets:
+            if net is not None:
+                for param in net.parameters():
+                    param.requires_grad = requires_grad
 
     def save_weights(self, save_dir, global_step):
         d_name = '{}_D_{}.pth'.format(self.dataset_name, global_step)

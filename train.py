@@ -26,8 +26,8 @@ def train(args):
             if global_step % args.save_freq == 0:
                 trainer.save_weights(args.save_dir, global_step)
 
-            # if global_step % args.video_freq == 0:
-            #     trainer.save_video(args.video_dir, global_step)
+            if global_step % args.video_freq == 0:
+                trainer.save_video(args.video_dir, global_step)
 
             global_step += 1
 
