@@ -17,7 +17,7 @@ def test_simple(args):
     G.load_state_dict(torch.load(args.modelG_state_path, map_location=lambda storage, loc: storage))
     G.eval()
 
-    input_img = Image.open(args.input_img_path).convert('RGB')
+    input_img = Image.open(args.input_img_path).convert('RGB').resize((args.img_size, args.img_size), Image.BICUBIC)
     input_tensor = get_input_tensor(input_img).unsqueeze(0).to(device)
 
     with torch.no_grad():
@@ -38,16 +38,14 @@ def test_recursive(args):
     G.load_state_dict(torch.load(args.modelG_state_path, map_location=lambda storage, loc: storage))
     G.eval()
 
-    input_img = Image.open(args.input_img_path).convert('RGB')
+    input_img = Image.open(args.input_img_path).convert('RGB').resize((args.img_size, args.img_size), Image.BICUBIC)
     input_tensor = get_input_tensor(input_img).unsqueeze(0).to(device)
 
-    cap = cv2.VideoCapture('test.mp4')
+    cap = cv2.VideoCapture(0)
     while cap.isOpened():
+        now = time.time()
         with torch.no_grad():
-            now = time.time()
             out = G(input_tensor)
-            end = time.time()
-            print('elapsed: {}'.format(end - now))
 
             out_denormalized = denormalize(out.squeeze())
             out_denormalized = out_denormalized.cpu().numpy().transpose(1, 2, 0)
@@ -55,6 +53,11 @@ def test_recursive(args):
             cv2.imshow('Result', out_denormalized)
 
             input_tensor = out
+
+        end = time.time()
+        elapsed = end - now
+        print('elapsed: {}'.format(elapsed))
+        print('fps: {}'.format(1.0 / elapsed))
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -69,6 +72,7 @@ def main():
     parser.add_argument('--modelG_state_path', type=str, default=None)
     parser.add_argument('--input_img_path', type=str, default='imgs/test.png')
     parser.add_argument('--test_mode', type=str, default='simple', choices=['simple', 'recursive'])
+    parser.add_argument('--img_size', type=int, default=256)
 
     # Model
     parser.add_argument('--input_nc', type=int, default=3, help='')

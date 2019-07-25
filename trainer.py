@@ -48,6 +48,7 @@ class Trainer(object):
         self.lambda_l1 = args.lambda_l1
         self.log_freq = args.log_freq
         self.dataset_name = args.dataset_name
+        self.img_size = args.crop_size
 
         time_str = time.strftime("%Y%m%d-%H%M%S")
         self.writer = SummaryWriter('{}/{}-{}'.format(args.log_dir, args.dataset_name, time_str))
@@ -141,7 +142,7 @@ class Trainer(object):
         output_dir = os.path.join(video_dir, 'step_{}'.format(global_step))
         os.mkdir(output_dir)
 
-        input_img = Image.open('imgs/test.png').convert('RGB')
+        input_img = Image.open('imgs/test.png').convert('RGB').resize((self.img_size, self.img_size), Image.BICUBIC)
         input_tensor = get_input_tensor(input_img).unsqueeze(0).to(self.device)
 
         self.G.eval()

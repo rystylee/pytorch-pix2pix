@@ -12,6 +12,10 @@ logs/*
 result/*
 videos/*
 
+# Trained model
+*.pth
+*.pt
+
 # Editor
 .vscode/*
 

@@ -62,7 +62,7 @@ def main():
     parser.add_argument('--save_dir', type=str, default='result')
     parser.add_argument('--save_freq', type=int, default=100)
     parser.add_argument('--video_dir', type=str, default='videos')
-    parser.add_argument('--video_freq', type=int, default=500)
+    parser.add_argument('--video_freq', type=int, default=1000)
 
     args = parser.parse_args()
     print(args)
