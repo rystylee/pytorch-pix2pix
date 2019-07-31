@@ -78,9 +78,9 @@ class Trainer(object):
             log_fake_B = denormalize(log_fake_B)
             self.writer.add_image('fake_B', log_fake_B, global_step)
 
-        # ----------------------------------------------------------------
+        # ==================================================================
         # 1. Train D
-        # ----------------------------------------------------------------
+        # ==================================================================
         self._set_requires_grad(self.D, True)
 
         # Real
@@ -95,16 +95,16 @@ class Trainer(object):
 
         loss_D = (loss_real_D + loss_fake_D) * 0.5
 
-        self.optim_D.zero_grad()
+        self._all_zero_grad()
         loss_D.backward()
         self.optim_D.step()
 
         # Logging
         self.writer.add_scalar('loss/loss_D', loss_D.item(), global_step)
 
-        # # ----------------------------------------------------------------
-        # # 2. Train G
-        # # ----------------------------------------------------------------
+        # ==================================================================
+        # 2. Train G
+        # ==================================================================
         self._set_requires_grad(self.D, False)
 
         # Fake
@@ -114,7 +114,7 @@ class Trainer(object):
         loss_G_L1 = l1_loss(fake_B, B)
         loss_G = loss_G_GAN + loss_G_L1 * self.lambda_l1
 
-        self.optim_G.zero_grad()
+        self._all_zero_grad()
         loss_G.backward()
         self.optim_G.step()
 
@@ -122,6 +122,10 @@ class Trainer(object):
         self.writer.add_scalar('loss/loss_G_GAN', loss_G_GAN.item(), global_step)
         self.writer.add_scalar('loss/loss_G_L1', loss_G_L1.item(), global_step)
         self.writer.add_scalar('loss/loss_G', loss_G.item(), global_step)
+
+    def _all_zero_grad(self):
+        self.optim_D.zero_grad()
+        self.optim_G.zero_grad()
 
     def _set_requires_grad(self, nets, requires_grad=False):
         if not isinstance(nets, list):
